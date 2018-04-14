@@ -15,6 +15,8 @@ var ctx = canvas.getContext('2d');
           this.score = 0;
           this.music = new Audio();
           this.music.src = "assets/audio.mp3";
+          this.alerta = new Audio();
+          this.alerta.src = "assets/alerta.mp3";
           //metodo principal de cualquier clase es el metodo draw
           this.draw = function(){
             this.move();
@@ -22,10 +24,14 @@ var ctx = canvas.getContext('2d');
             //segunda imagen, la x de la primer imagen mas el ancho del canvas para que aparezca detras de la primer imagen
             ctx.drawImage(this.img, this.x + canvas.width, this.y,this.width,this.height);
   //cambiar el estilo del texto
+          this.drawScore= function(){
+          this.score = Math.floor(frames/60);
           ctx.font = "50px Avenir";
-          ctx.fillStyle = "peru";
+          ctx.fillStyle = "orange";
           ctx.fillText(this.score,this.width/2, this.y+50);
 
+  }
+  
   }
     //dibuja imagen, origen de imagen (x,y), ancho de imagen(ancho del canvas)
     //se usa el this para no tener que cambiar cada propiedad por separado
@@ -57,10 +63,27 @@ var ctx = canvas.getContext('2d');
               //gravedad para flappy
               this.y += .4;
             ctx.drawImage(this.img,this.x,this.y,this.width,this.height);
+            //esto es una validacion, se ejecuta el mayor tiempo posible, 
+            if(this.y < 0 || this.y > canvas.height - this.height) gameOver();
+
             };
             this.move = function(){
-              this.y -=60;} 
+              this.y -=60;
+            } 
+            this.isTouching = function(pipe){
+      return(this.x < pipe.x + pipe.width) &&
+            (this.x + this.width > pipe.x) && 
+            (this.y < pipe.y + pipe.height) &&
+            (this.y +this.height > pipe.y);
+              
+            }
           }
+//la x de flappy es menor que la x del pipe mas su ancho
+//la x de flappy mas su ancho es mayor a la x del pipe
+//la y de flappy es menor que la y de pipe + el alto
+//la y de flappy es mayor que la y del pipe
+
+
 //TERCER CLASE   CLASE PIPE UNO OBJETO DE UNA CLASE
 
           function Pipe(y, height){
@@ -92,7 +115,7 @@ var pipes = [];
 
 function generatePipes(){
   if(!(frames % 400 === 0))return;
-  var ventanita = 100;
+  var ventanita = 150;
   var randomHeight = Math.floor(Math.random()* 200)+50;
 var pipe = new Pipe(0, randomHeight);
 var pipe2 = new Pipe(randomHeight + ventanita, canvas.height-(randomHeight+ventanita));
@@ -106,10 +129,25 @@ function drawPipes(){
     pipe.draw();
   })
 }
+function gameOver(){
+  stop();
+  ctx.font = "80px courier";
+  ctx.strokeStyle="orange";
+  ctx.lineWidth = 8;
+  ctx.strokeText("Game Over" , 180,230);
+  ctx.font="40px Avenir";
+  ctx.fillStyle = "black";
+  ctx.fillText("Insert coin to continue", 190,290);
+  
+}
 
-function fameOver(){
-	stop();
-	ctx.font = "200px";
+//Funcion de validacion : valida si muere, empieza, suma puntos, como se gana o pierde
+
+function checkCollition(){
+  pipes.forEach(function(pipe){
+    if(flappy.isTouching(pipe)) gameOver();
+  });
+
 }
 
 
@@ -130,6 +168,9 @@ function update(){
           board.draw();
           flappy.draw();
           drawPipes();
+          board.drawScore();
+          //checar
+          checkCollition();
 
 }
 
@@ -145,10 +186,15 @@ function start(){
          if(intervalo > 0) return;
           intervalo = setInterval(function(){
             update();
-          }, 1000/60);//fps a 60
-        }
+          }, 100/60);
+          flappy.y = 150;//fps a 60
+          pipes = [];
+          board.score = 0;
+          frames = 0;
+        } 
 
   function stop(){
+    board.alerta.play()
     board.music.pause();
     clearInterval(intervalo);
     intervalo = 0;
@@ -158,7 +204,7 @@ function start(){
 
 //listeners (observadores);
 
-        document.getElementById('startButton').addEventListener('click', start);
+       // document.getElementById('startButton').addEventListener('click', start);
 
         document.getElementById('pauseButton').addEventListener('click', stop);
 
@@ -166,8 +212,16 @@ function start(){
     if(e.keyCode ===32 ){
       flappy.move();
     }
+    if(e.keyCode === 82){
+      start();
+    }
   })
 
 
 
         // para mover flappy; se requiere un metodo para mover flappy y un listener para que detecte la tecla y se mueva
+        //generate para hacer enemigos
+        //funcion de validaciones 
+
+        //dos personajes o turnos;
+        
